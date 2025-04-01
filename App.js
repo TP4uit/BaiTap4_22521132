@@ -1,20 +1,61 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function App() {
+// Import screens - đường dẫn đúng và tên file chính xác
+import LoginScreen from './screens/LoginScreen';
+import ToDoListScreen from './screens/ToDoListScreen';
+import ToDoDetail from './screens/ToDoDetail';
+
+const Stack = createStackNavigator();
+
+const App = () => {
+  const [isLoading, setIsLoading] = useState(true);
+  const [userToken, setUserToken] = useState(null);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      try {
+        const isLoggedIn = await AsyncStorage.getItem('isLoggedIn');
+        setUserToken(isLoggedIn);
+      } catch (error) {
+        console.log('Error checking login status:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    checkLoginStatus();
+  }, []);
+
+  if (isLoading) {
+    // You could show a splash screen here
+    return null;
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {userToken ? (
+          // User is logged in
+          <>
+            <Stack.Screen name="TodoList" component={ToDoListScreen} />
+            <Stack.Screen name="TodoDetail" component={ToDoDetail} />
+            <Stack.Screen name="Login" component={LoginScreen} />
+          </>
+        ) : (
+          // User is not logged in
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="TodoList" component={ToDoListScreen} />
+            <Stack.Screen name="TodoDetail" component={ToDoDetail} />
+          </>
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
   );
-}
+};
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+export default App;
